@@ -2,6 +2,14 @@
 .env
 .env.*
 !.env.example
+backend/data/
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfvars
+!infra/*.tfvars.example
 
 # Python
 __pycache__/
@@ -13,6 +21,11 @@ __pycache__/
 venv/
 .venv/
 env/
+
+# Node
+node_modules/
+frontend/dist/
+*.local
 
 # OS and editors
 .DS_Store

@@ -1,0 +1,3 @@
+aws_region         = "us-west-1"
+project_name       = "thyme"
+enable_cloudfront  = true

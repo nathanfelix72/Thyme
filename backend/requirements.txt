@@ -1,0 +1,15 @@
+python-dotenv
+langchain
+langchain-core
+langgraph
+langchain-ollama
+langchain-openai
+langchain-anthropic
+fastapi
+uvicorn
+httpx
+pydantic
+cryptography
+boto3
+python-jose[cryptography]
+
