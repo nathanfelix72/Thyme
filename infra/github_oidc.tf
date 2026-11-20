@@ -23,11 +23,13 @@ data "aws_iam_policy_document" "github_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # This account's GitHub OIDC tokens use immutable owner@id/repo@id subjects
+    # (same pattern as portfolio-github-deploy), not plain repo:user/name refs.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:nathanfelix72/Thyme:ref:refs/heads/main",
+        "repo:nathanfelix72@131198703/Thyme@1464665864:*",
       ]
     }
   }
