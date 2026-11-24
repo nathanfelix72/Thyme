@@ -21,6 +21,7 @@ DEFAULT_USER_ID = os.getenv("THYME_DEFAULT_USER_ID", "local-dev")
 # Local laptop testing (same as 590R-AI labs)
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 
 # Optional Fernet key for encrypting BYOK secrets at rest
 THYME_SECRETS_KEY = os.getenv("THYME_SECRETS_KEY", "")

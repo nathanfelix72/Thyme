@@ -44,14 +44,19 @@ flowchart LR
   ShopApi -.-> FutureStores[Future_store_APIs]
 ```
 
-## Next sprint: RAG recipes
+## Phase 1: RAG recipe search
 
-Intended flow (stubs only today):
+The MVP searches a small bundled recipe catalog with semantic embeddings and uses
+the selected chat model to produce a concise answer grounded in retrieved recipes.
 
-1. User uploads recipes → `recipes` module stores them
-2. `rag` module embeds + indexes recipe text
-3. Chat UI in `frontend/src/modules/rag` calls `/api/rag/chat`
-4. Answers come from retrieved user recipes (“lots of potatoes”, “I’m busy”, etc.)
+1. The first search lazily embeds the bundled sample recipes with Ollama.
+2. `rag` ranks recipes by cosine similarity to the user's natural-language query.
+3. The chat UI calls `/api/rag/chat` and displays the retrieved recipe sources.
+4. The answer uses retrieved context and does not invent recipe details.
+
+Recipe upload, persistence, speech input, image search, and weekly planning are
+outside this phase. The sample catalog is a temporary source that can be replaced
+by the recipe import flow later.
 
 Entry points:
 

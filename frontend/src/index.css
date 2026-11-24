@@ -286,6 +286,329 @@ h1 {
   cursor: wait;
 }
 
+.rag-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.rag-intro,
+.rag-conversation,
+.rag-side-note {
+  border: 1px solid rgba(28, 36, 28, 0.12);
+  border-radius: 24px;
+  background: rgba(250, 252, 247, 0.86);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+}
+
+.rag-intro {
+  padding: 1.6rem 1.8rem;
+}
+
+.rag-intro .lede {
+  max-width: 44rem;
+}
+
+.rag-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(230px, 0.7fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.rag-conversation {
+  display: flex;
+  min-height: 490px;
+  flex-direction: column;
+  padding: 1.2rem;
+}
+
+.rag-empty {
+  display: grid;
+  flex: 1;
+  align-content: center;
+  justify-items: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.rag-spark {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(198, 217, 106, 0.35);
+  color: var(--leaf-deep);
+  font-size: 1.45rem;
+}
+
+.rag-empty h2,
+.rag-side-note h2 {
+  margin: 0.9rem 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  letter-spacing: -0.02em;
+}
+
+.rag-empty > p,
+.rag-side-note > p:not(.rag-side-kicker) {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.rag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  max-width: 40rem;
+  margin-top: 1.25rem;
+}
+
+.rag-suggestion {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--leaf-deep);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.rag-suggestion:hover:not(:disabled) {
+  background: white;
+  border-color: rgba(42, 74, 48, 0.38);
+}
+
+.rag-suggestion:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.rag-messages {
+  display: grid;
+  gap: 1rem;
+  flex: 1;
+  padding: 0.2rem 0.2rem 1rem;
+}
+
+.rag-message {
+  max-width: 94%;
+  padding: 0.9rem 1rem;
+  border-radius: 17px;
+}
+
+.rag-message-user {
+  justify-self: end;
+  background: var(--leaf-deep);
+  color: #f5faf3;
+  border-bottom-right-radius: 5px;
+}
+
+.rag-message-assistant {
+  justify-self: start;
+  background: rgba(229, 237, 222, 0.72);
+  border: 1px solid rgba(28, 36, 28, 0.08);
+  border-bottom-left-radius: 5px;
+}
+
+.rag-message-label {
+  margin: 0 0 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.rag-message-text {
+  margin: 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.rag-recipe-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+
+.rag-recipe {
+  overflow: hidden;
+  border: 1px solid rgba(28, 36, 28, 0.12);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.rag-recipe summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.rag-recipe summary > span:first-of-type {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.rag-recipe summary small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.rag-recipe-open {
+  flex: none;
+  color: var(--leaf);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.rag-recipe-description,
+.rag-recipe h3,
+.rag-recipe ul,
+.rag-recipe ol {
+  margin-right: 1rem;
+  margin-left: 1rem;
+}
+
+.rag-recipe-description {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.rag-recipe h3 {
+  margin-top: 0.85rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.82rem;
+}
+
+.rag-recipe ul,
+.rag-recipe ol {
+  padding-left: 1.15rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.rag-recipe ol {
+  margin-bottom: 1rem;
+}
+
+.rag-loading,
+.rag-error {
+  margin: 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.rag-error {
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  background: #fff0e9;
+  color: #8a341d;
+}
+
+.rag-composer {
+  display: flex;
+  align-items: end;
+  gap: 0.65rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line);
+}
+
+.rag-composer textarea {
+  flex: 1;
+  min-width: 0;
+  resize: vertical;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.4;
+}
+
+.rag-composer textarea:focus {
+  outline: 2px solid rgba(63, 107, 69, 0.35);
+  border-color: var(--leaf);
+}
+
+.rag-composer button {
+  flex: none;
+  padding: 0.78rem 1rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--leaf-deep);
+  color: #f5faf3;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rag-composer button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rag-footnote {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: 0.77rem;
+  text-align: center;
+}
+
+.rag-side-note {
+  padding: 1.2rem;
+}
+
+.rag-side-kicker {
+  margin: 0;
+  color: var(--leaf);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.rag-side-note h2 {
+  margin-top: 0.55rem;
+  font-size: 1.35rem;
+}
+
+.rag-side-divider {
+  height: 1px;
+  margin: 1.15rem 0;
+  background: var(--line);
+}
+
+.rag-side-note ul {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.rag-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .settings-status {
   margin-top: 1rem;
   color: var(--muted);
@@ -345,7 +668,30 @@ h1 {
 
 @media (max-width: 720px) {
   .home-split,
-  .area-list {
+  .area-list,
+  .rag-workspace {
     grid-template-columns: 1fr;
+  }
+
+  .rag-conversation {
+    min-height: 420px;
+    padding: 0.85rem;
+  }
+
+  .rag-intro {
+    padding: 1.3rem;
+  }
+
+  .rag-composer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rag-composer button {
+    width: 100%;
+  }
+
+  .rag-message {
+    max-width: 100%;
   }
 }

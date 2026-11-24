@@ -29,7 +29,12 @@ Same as 590R-AI labs — default model `qwen2.5:7b`:
 
 ```powershell
 ollama pull qwen2.5:7b
+ollama pull nomic-embed-text
 ```
+
+Thyme uses `nomic-embed-text` locally to find semantically related recipes. The
+chat response uses the provider selected in **Settings**. Set
+`OLLAMA_EMBED_MODEL` in `.env` to use another Ollama embedding model.
 
 ## Run locally
 
@@ -75,7 +80,7 @@ Keys are encrypted under `backend/data/` (gitignored). On AWS (Plan B) they go t
 - **Admin** (`/admin`) lists all Cognito users — only accounts in the `admins` group  
 - Your admin invite went to `nathan.felix@gmail.com` (temp password in email → set a new one on first login)
 
-## AWS (phase 1 — no hosted API)
+## AWS deployment status
 
 - Static site: https://dv5md9hmzm76i.cloudfront.net  
 - Backend: run on a laptop (`uvicorn`).  

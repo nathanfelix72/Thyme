@@ -14,11 +14,27 @@ from typing import Protocol
 
 @dataclass
 class RecipeRecord:
-    """Placeholder shape for a stored recipe."""
+    """Recipe shape shared by the seed catalog and future recipe storage."""
 
     id: str
     title: str
     body: str
+    prep_minutes: int = 0
+    ingredients: tuple[str, ...] = ()
+    instructions: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+
+    @property
+    def search_text(self) -> str:
+        return "\n".join(
+            (
+                self.title,
+                self.body,
+                f"Preparation time: {self.prep_minutes} minutes",
+                f"Ingredients: {', '.join(self.ingredients)}",
+                f"Tags: {', '.join(self.tags)}",
+            )
+        )
 
 
 class RecipeStore(Protocol):
