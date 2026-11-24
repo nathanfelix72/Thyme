@@ -14,7 +14,7 @@ from typing import Protocol
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.modules.shared import config
-from app.modules.settings.schemas import Provider
+from app.modules.settings.schemas import LLM_TASKS, LlmTask, Provider, Theme, Units
 
 
 def _mask(key: str | None) -> str | None:
@@ -25,23 +25,129 @@ def _mask(key: str | None) -> str | None:
     return f"{key[:3]}…{key[-4:]}"
 
 
+def _normalize_task_providers(raw: object) -> dict[str, Provider]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, Provider] = {}
+    for task in LLM_TASKS:
+        val = raw.get(task)
+        if val in ("ollama", "openai", "anthropic"):
+            out[task] = val
+    return out
+
+
+def _normalize_theme(raw: object) -> Theme:
+    if raw in ("light", "dark", "system"):
+        return raw
+    return "system"
+
+
+def _normalize_units(raw: object) -> Units:
+    if raw in ("us", "metric"):
+        return raw
+    return "us"
+
+
+def _normalize_servings(raw: object) -> int:
+    try:
+        value = int(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 4
+    return max(1, min(48, value))
+
+
 @dataclass
 class UserSettings:
     user_id: str
     provider: Provider = "ollama"
     ollama_model: str = "qwen2.5:7b"
+    task_providers: dict[str, Provider] | None = None
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    always_exclude_ingredients: list[str] | None = None
+    display_name: str | None = None
+    theme: Theme = "system"
+    units: Units = "us"
+    default_servings: int = 4
+    inactive_calendar_ids: list[str] | None = None
+    google_refresh_token: str | None = None
+    google_calendar_email: str | None = None
+
+    def provider_for(self, task: LlmTask | None = None) -> Provider:
+        """Resolve the provider for a task, falling back to the default."""
+        if task and self.task_providers:
+            override = self.task_providers.get(task)
+            if override in ("ollama", "openai", "anthropic"):
+                return override
+        return self.provider
 
     def public_dict(self) -> dict:
+        overrides = self.task_providers or {}
         return {
             "user_id": self.user_id,
             "provider": self.provider,
             "ollama_model": self.ollama_model,
+            "task_providers": {task: overrides.get(task) for task in LLM_TASKS},
             "has_openai_key": bool(self.openai_api_key),
             "has_anthropic_key": bool(self.anthropic_api_key),
             "openai_key_hint": _mask(self.openai_api_key),
             "anthropic_key_hint": _mask(self.anthropic_api_key),
+            "always_exclude_ingredients": list(
+                self.always_exclude_ingredients or []
+            ),
+            "display_name": self.display_name,
+            "theme": self.theme,
+            "units": self.units,
+            "default_servings": self.default_servings,
+            "inactive_calendar_ids": list(self.inactive_calendar_ids or []),
+        }
+
+    @staticmethod
+    def from_payload(user_id: str, payload: dict) -> UserSettings:
+        return UserSettings(
+            user_id=user_id,
+            provider=payload.get("provider", "ollama"),
+            ollama_model=payload.get("ollama_model", config.OLLAMA_MODEL),
+            task_providers=_normalize_task_providers(payload.get("task_providers")),
+            openai_api_key=payload.get("openai_api_key"),
+            anthropic_api_key=payload.get("anthropic_api_key"),
+            always_exclude_ingredients=list(
+                payload.get("always_exclude_ingredients") or []
+            ),
+            display_name=(
+                str(payload["display_name"]).strip() or None
+                if payload.get("display_name") is not None
+                else None
+            ),
+            theme=_normalize_theme(payload.get("theme")),
+            units=_normalize_units(payload.get("units")),
+            default_servings=_normalize_servings(payload.get("default_servings", 4)),
+            inactive_calendar_ids=[
+                str(item).strip()
+                for item in (payload.get("inactive_calendar_ids") or [])
+                if item and str(item).strip()
+            ],
+            google_refresh_token=payload.get("google_refresh_token"),
+            google_calendar_email=payload.get("google_calendar_email"),
+        )
+
+    def secret_payload(self) -> dict:
+        return {
+            "provider": self.provider,
+            "ollama_model": self.ollama_model,
+            "task_providers": _normalize_task_providers(self.task_providers),
+            "openai_api_key": self.openai_api_key,
+            "anthropic_api_key": self.anthropic_api_key,
+            "always_exclude_ingredients": list(
+                self.always_exclude_ingredients or []
+            ),
+            "display_name": self.display_name,
+            "theme": self.theme,
+            "units": self.units,
+            "default_servings": self.default_servings,
+            "inactive_calendar_ids": list(self.inactive_calendar_ids or []),
+            "google_refresh_token": self.google_refresh_token,
+            "google_calendar_email": self.google_calendar_email,
         }
 
 
@@ -90,22 +196,11 @@ class LocalSecretsStore:
             payload = json.loads(raw)
         except (InvalidToken, json.JSONDecodeError):
             return UserSettings(user_id=user_id)
-        return UserSettings(
-            user_id=user_id,
-            provider=payload.get("provider", "ollama"),
-            ollama_model=payload.get("ollama_model", config.OLLAMA_MODEL),
-            openai_api_key=payload.get("openai_api_key"),
-            anthropic_api_key=payload.get("anthropic_api_key"),
-        )
+        return UserSettings.from_payload(user_id, payload)
 
     def save(self, settings: UserSettings) -> UserSettings:
         data = self._read_all()
-        payload = {
-            "provider": settings.provider,
-            "ollama_model": settings.ollama_model,
-            "openai_api_key": settings.openai_api_key,
-            "anthropic_api_key": settings.anthropic_api_key,
-        }
+        payload = settings.secret_payload()
         token = self._fernet.encrypt(json.dumps(payload).encode()).decode()
         data[settings.user_id] = token
         self._write_all(data)
@@ -133,21 +228,10 @@ class DynamoSecretsStore:
             return UserSettings(user_id=user_id)
         raw = self._fernet.decrypt(item["payload"].encode()).decode()
         payload = json.loads(raw)
-        return UserSettings(
-            user_id=user_id,
-            provider=payload.get("provider", "ollama"),
-            ollama_model=payload.get("ollama_model", config.OLLAMA_MODEL),
-            openai_api_key=payload.get("openai_api_key"),
-            anthropic_api_key=payload.get("anthropic_api_key"),
-        )
+        return UserSettings.from_payload(user_id, payload)
 
     def save(self, settings: UserSettings) -> UserSettings:
-        payload = {
-            "provider": settings.provider,
-            "ollama_model": settings.ollama_model,
-            "openai_api_key": settings.openai_api_key,
-            "anthropic_api_key": settings.anthropic_api_key,
-        }
+        payload = settings.secret_payload()
         token = self._fernet.encrypt(json.dumps(payload).encode()).decode()
         self._table.put_item(
             Item={

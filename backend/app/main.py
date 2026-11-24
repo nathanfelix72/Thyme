@@ -4,6 +4,9 @@ Run from repo root (venv active):
   uvicorn app.main:app --reload --app-dir backend --port 8080
 """
 
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,7 +19,22 @@ from app.modules.recipes.router import router as recipes_router
 from app.modules.settings.router import router as settings_router
 from app.modules.shop.router import router as shop_router
 
-app = FastAPI(title="Thyme API", version="0.1.0")
+logger = logging.getLogger("thyme")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    try:
+        from app.modules.rag.index import warm_embeddings
+
+        warm_embeddings()
+        logger.info("embedding model warmed (%s)", config.EMBEDDING_MODEL)
+    except Exception as exc:
+        logger.warning("embedding warmup skipped: %s", exc)
+    yield
+
+
+app = FastAPI(title="Thyme API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

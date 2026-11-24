@@ -1,7 +1,7 @@
 """Request identity helpers.
 
-Local: X-User-Id header or default local-dev (no Cognito required for laptop AI).
-When Authorization Bearer is present, verify Cognito JWT and use that identity.
+Requires Cognito Bearer JWT by default.
+Anonymous local-dev is only allowed when THYME_ALLOW_ANON=true (tests/dev escape hatch).
 """
 
 from __future__ import annotations
@@ -93,11 +93,14 @@ def get_current_user(
     if auth.startswith("Bearer "):
         return _verify_cognito_token(auth.removeprefix("Bearer ").strip())
 
-    if config.THYME_ENV == "local":
+    if config.ALLOW_ANON and config.THYME_ENV == "local":
         uid = (x_user_id or config.DEFAULT_USER_ID).strip() or config.DEFAULT_USER_ID
         return AuthUser(user_id=uid, email=None, groups=[])
 
-    raise HTTPException(status_code=401, detail="Missing Cognito bearer token")
+    raise HTTPException(
+        status_code=401,
+        detail="Sign in required. Missing Cognito bearer token.",
+    )
 
 
 def get_current_user_id(user: AuthUser = Depends(get_current_user)) -> str:

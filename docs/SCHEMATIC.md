@@ -6,7 +6,7 @@ Team-friendly layout for the AI meal-planning app. Each capability owns a matchi
 
 | Area | Backend | Frontend | Person |
 |------|---------|----------|--------|
-| RAG / Understand | `backend/app/modules/rag` + `recipes` | `frontend/src/modules/rag` | TBD |
+| RAG / Find | `backend/app/modules/rag` + `recipes` | `frontend/src/modules/rag` | TBD |
 | Plan | `backend/app/modules/calendar` | `frontend/src/modules/calendar` | TBD |
 | Shop | `backend/app/modules/shop` | `frontend/src/modules/shop` | TBD |
 | Budget | `backend/app/modules/budget` | `frontend/src/modules/budget` | TBD |
@@ -39,24 +39,26 @@ flowchart LR
   CalUi --> CalApi
   ShopUi --> ShopApi
   BudUi --> BudApi
-  RecipesApi -.-> FutureDb[(Future_DB_and_vectors)]
-  BudApi -.-> FuturePlaid[Future_Plaid]
-  ShopApi -.-> FutureStores[Future_store_APIs]
+  RecipesApi --> RecipesDb[(DynamoDB_or_local_JSON)]
+  RagApi --> Chroma[(Local_Chroma)]
+  RagApi --> Tavily[Tavily_one_call]
 ```
 
-## Next sprint: RAG recipes
+## LLM Phase 1: filter-driven recipe RAG (non-agentic)
 
-Intended flow (stubs only today):
+Not a chatbot. Users set filters; the API runs a fixed pipeline.
 
-1. User uploads recipes → `recipes` module stores them
-2. `rag` module embeds + indexes recipe text
-3. Chat UI in `frontend/src/modules/rag` calls `/api/rag/chat`
-4. Answers come from retrieved user recipes (“lots of potatoes”, “I’m busy”, etc.)
+1. User uploads PDF/TXT → `recipes` extracts text → LLM normalizes to recipe JSON → store (local JSON or DynamoDB `thyme-recipes`)
+2. `rag` embeds into **local Chroma** (per user) with MiniLM
+3. Find / Upload UI calls `POST /api/rag/search` with filters (include/exclude ingredients, time, difficulty, cuisine, optional semantic hint, web toggle)
+4. Pipeline: hard filter + semantic rank → optional **one** Tavily web search → normalize/import web hits → return ranked recipe cards
 
 Entry points:
 
-- Backend: `backend/app/modules/recipes/service.py`, `backend/app/modules/rag/service.py`
+- Backend: `backend/app/modules/recipes/`, `backend/app/modules/rag/`
 - Frontend: `frontend/src/modules/rag/RagPage.tsx`
+
+Agentic multi-tool planning is later — Phase 1 allows only that single web search call.
 
 ## Local shape
 
@@ -65,11 +67,11 @@ Entry points:
 
 ## LLM / BYOK
 
-- Default local: Ollama `qwen2.5:7b` via `shared/llm.py`
+- Default local: Ollama `qwen2.5:7b` via `shared/llm.py` (used to normalize uploads/web text)
 - Per-user OpenAI/Anthropic keys via `settings` module (encrypted)
 - Production auth: Cognito (Plan B); local uses `local-dev` user
 
-## AWS Plan B (Terraform written, not applied)
+## AWS infra Phase 1 (applied — naming differs from LLM Phase 1)
 
 See [PLAN_B_AWS.md](PLAN_B_AWS.md).
 
@@ -77,4 +79,4 @@ See [PLAN_B_AWS.md](PLAN_B_AWS.md).
 - Auth: Cognito
 - BYOK + recipes: DynamoDB
 - Fernet key: SSM SecureString
-- API host: decide after approval (laptop vs Lambda)
+- API host: laptop until a later step

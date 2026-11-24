@@ -26,7 +26,7 @@
 |----------|---------|
 | Cognito user pool + app client | Email/password accounts |
 | DynamoDB `thyme-user-secrets` | Encrypted BYOK keys per user |
-| DynamoDB `thyme-recipes` | Standardized recipe JSON (next sprint) |
+| DynamoDB `thyme-recipes` | Standardized recipe JSON (LLM Phase 1 RAG) |
 | S3 + CloudFront | Host React build (`*.cloudfront.net`, no custom domain) |
 | SSM SecureString | Fernet key for encrypting BYOK payloads |
 

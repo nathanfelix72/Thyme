@@ -7,9 +7,15 @@ langchain-openai
 langchain-anthropic
 fastapi
 uvicorn
+python-multipart
 httpx
 pydantic
 cryptography
 boto3
 python-jose[cryptography]
+pypdf
+chromadb
+sentence-transformers
+tavily-python
+pytest
 

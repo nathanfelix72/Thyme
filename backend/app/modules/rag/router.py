@@ -1,46 +1,47 @@
-"""RAG chatbot API stubs.
+"""Filter-driven recipe search API (non-agentic)."""
 
-Next sprint: chat that retrieves from user-uploaded recipes.
-LLM calls should go through shared.llm + settings BYOK (see /api/settings).
-"""
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.modules.rag.schemas import (
+    IndexRequest,
+    IndexResponse,
+    SearchRequest,
+    SearchResponse,
+)
+from app.modules.rag.service import reindex_recipe, search
 from app.modules.shared.auth import get_current_user_id
 from app.modules.shared.schemas import StubStatus
 
 router = APIRouter(prefix="/api/rag", tags=["rag"])
 
 
-class ChatRequest(BaseModel):
-    message: str
-
-
 @router.get("", response_model=StubStatus)
 def rag_root() -> StubStatus:
     return StubStatus(
         module="rag",
-        detail="RAG chat + retrieval endpoints will live here.",
+        detail="Filter + semantic recipe search (POST /api/rag/search).",
     )
 
 
-@router.post("/chat", response_model=StubStatus)
-def chat(
-    _body: ChatRequest,
-    _user_id: str = Depends(get_current_user_id),
-) -> StubStatus:
-    # TODO: load user settings → build_chat_model → retrieve recipes → answer
-    return StubStatus(
-        module="rag",
-        detail="TODO: retrieve matching recipes and answer in plain language.",
-    )
+@router.post("/search", response_model=SearchResponse)
+def search_recipes(
+    body: SearchRequest,
+    user_id: str = Depends(get_current_user_id),
+) -> SearchResponse:
+    try:
+        return search(user_id, body)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.post("/index", response_model=StubStatus)
-def index_recipe() -> StubStatus:
-    return StubStatus(
-        module="rag",
-        detail="TODO: embed + index a stored recipe for retrieval.",
-    )
-
+@router.post("/index", response_model=IndexResponse)
+def index_one(
+    body: IndexRequest,
+    user_id: str = Depends(get_current_user_id),
+) -> IndexResponse:
+    ok = reindex_recipe(user_id, body.recipe_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return IndexResponse(indexed=True, recipe_id=body.recipe_id)

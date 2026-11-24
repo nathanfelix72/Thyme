@@ -2,26 +2,38 @@ import { Link } from "react-router-dom";
 
 const areas = [
   {
-    to: "/understand",
+    to: "/find",
     num: "01",
-    title: "Understand",
-    blurb: "RAG recipe chat — next sprint: upload your own recipes.",
+    title: "Find",
+    blurb: "Search your library with filters and similarity.",
+  },
+  {
+    to: "/library",
+    num: "02",
+    title: "Library",
+    blurb: "Browse saved recipes and open them in cook mode.",
+  },
+  {
+    to: "/upload",
+    num: "03",
+    title: "Upload",
+    blurb: "Add recipes from files or a filtered web search.",
   },
   {
     to: "/plan",
-    num: "02",
+    num: "04",
     title: "Plan",
     blurb: "Spread meals across the week with recipe links.",
   },
   {
     to: "/shop",
-    num: "03",
+    num: "05",
     title: "Shop",
     blurb: "Build the grocery list and order from major stores.",
   },
   {
     to: "/budget",
-    num: "04",
+    num: "06",
     title: "Budget",
     blurb: "Keep meals and groceries within a Plaid-backed budget.",
   },
@@ -29,7 +41,7 @@ const areas = [
 
 export function Home() {
   return (
-    <section className="home">
+    <section className="page-panel home">
       <p className="eyebrow">AI meal-planning agent</p>
       <h1>Thyme</h1>
       <p className="lede">

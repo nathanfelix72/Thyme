@@ -35,11 +35,37 @@ def update_settings(
         current.provider = body.provider
     if body.ollama_model is not None:
         current.ollama_model = body.ollama_model.strip() or current.ollama_model
+    if body.task_providers is not None:
+        current.task_providers = {
+            task: provider
+            for task, provider in body.task_providers.model_dump().items()
+            if provider in ("ollama", "openai", "anthropic")
+        }
 
     if body.openai_api_key is not None:
         current.openai_api_key = body.openai_api_key.strip() or None
     if body.anthropic_api_key is not None:
         current.anthropic_api_key = body.anthropic_api_key.strip() or None
+    if body.always_exclude_ingredients is not None:
+        current.always_exclude_ingredients = [
+            item.strip()
+            for item in body.always_exclude_ingredients
+            if item and item.strip()
+        ]
+    if body.display_name is not None:
+        current.display_name = body.display_name.strip() or None
+    if body.theme is not None:
+        current.theme = body.theme
+    if body.units is not None:
+        current.units = body.units
+    if body.default_servings is not None:
+        current.default_servings = body.default_servings
+    if body.inactive_calendar_ids is not None:
+        current.inactive_calendar_ids = [
+            item.strip()
+            for item in body.inactive_calendar_ids
+            if item and str(item).strip()
+        ]
 
     saved = store.save(current)
     return SettingsPublic(**saved.public_dict())
@@ -50,11 +76,12 @@ def test_chat(
     body: TestChatRequest,
     user_id: str = Depends(get_current_user_id),
 ) -> TestChatResponse:
-    """Smoke-test the selected provider (Ollama local or BYOK frontier)."""
+    """Smoke-test a provider (default, or an explicit override)."""
     settings = get_store().get(user_id)
+    provider = body.provider or settings.provider
     try:
         model = build_chat_model(
-            settings.provider,
+            provider,
             openai_api_key=settings.openai_api_key,
             anthropic_api_key=settings.anthropic_api_key,
             ollama_model=settings.ollama_model,
@@ -64,4 +91,4 @@ def test_chat(
     except Exception as exc:  # noqa: BLE001 — surface provider errors to the UI
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return TestChatResponse(provider=settings.provider, reply=str(reply))
+    return TestChatResponse(provider=provider, reply=str(reply))

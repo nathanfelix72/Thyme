@@ -43,6 +43,6 @@ resource "aws_cognito_user_pool_client" "web" {
 resource "aws_cognito_user_group" "admins" {
   name         = "admins"
   user_pool_id = aws_cognito_user_pool.main.id
-  description  = "Can list all Cognito users from the Thyme admin page"
+  description  = "Can manage Cognito users and admin group membership from Thyme"
   precedence   = 1
 }

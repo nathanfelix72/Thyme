@@ -38,7 +38,7 @@ export function Login() {
       <section className="home">
         <h1>You are signed in</h1>
         <p className="lede">
-          <Link to="/settings">Go to Settings</Link>
+          <Link to="/ai-settings">Go to AI settings</Link>
         </p>
       </section>
     );
@@ -58,7 +58,7 @@ export function Login() {
         }
         if (result.nextStep.signInStep === "DONE") {
           await refresh();
-          navigate("/settings");
+          navigate("/profile");
           return;
         }
         setStatus(`Extra step required: ${result.nextStep.signInStep}`);
@@ -67,7 +67,7 @@ export function Login() {
       if (mode === "newpassword") {
         await confirmSignIn({ challengeResponse: newPassword });
         await refresh();
-        navigate("/settings");
+        navigate("/profile");
         return;
       }
       if (mode === "signup") {
