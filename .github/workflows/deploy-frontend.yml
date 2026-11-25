@@ -38,6 +38,11 @@ jobs:
 
       - name: Install & build
         working-directory: frontend
+        env:
+          # Baked into the Vite bundle at build time (public Cognito SPA client).
+          VITE_COGNITO_REGION: us-west-1
+          VITE_COGNITO_USER_POOL_ID: us-west-1_Oqxx0Qvpk
+          VITE_COGNITO_CLIENT_ID: 3aj94humt4rjn2gu9uklv9sd5j
         run: |
           npm ci
           npm run build
