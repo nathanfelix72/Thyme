@@ -249,16 +249,16 @@ export function CalendarPage() {
       .then(async (res) => {
         if (!res.ok) return;
         const data = await res.json();
-        const fromProfile = Array.isArray(data.inactive_calendar_ids)
+        const fromProfile: string[] = Array.isArray(data.inactive_calendar_ids)
           ? data.inactive_calendar_ids.filter(
               (x: unknown): x is string => typeof x === "string" && !!x.trim(),
             )
           : [];
         const local = readLocalHiddenCalendars();
         // Prefer saved profile; if empty, migrate any local-only hides once.
-        const merged =
+        const merged: Set<string> =
           fromProfile.length > 0
-            ? new Set(fromProfile)
+            ? new Set<string>(fromProfile)
             : local.size > 0
               ? local
               : new Set<string>();

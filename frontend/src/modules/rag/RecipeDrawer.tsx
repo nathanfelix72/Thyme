@@ -144,11 +144,12 @@ export function RecipeDrawer({
 
   useEffect(() => {
     if (!recipe) return;
+    const current = recipe;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         if (editing) {
           setEditing(false);
-          setDraft(toDraft(recipe));
+          setDraft(toDraft(current));
           setEditError(null);
         } else {
           onClose();
@@ -166,6 +167,7 @@ export function RecipeDrawer({
 
   if (!recipe || !draft) return null;
   const active = recipe;
+  const editDraft = draft;
 
   async function onCopy() {
     try {
@@ -249,34 +251,34 @@ export function RecipeDrawer({
   }
 
   async function saveEdit() {
-    if (!draft.title.trim()) {
+    if (!editDraft.title.trim()) {
       setEditError("Title is required.");
       return;
     }
     setEditBusy(true);
     setEditError(null);
-    const ingredients = draft.ingredients
+    const ingredients = editDraft.ingredients
       .map((ing) => ({
         name: ing.name.trim(),
         quantity: ing.quantity.trim() || null,
         unit: ing.unit.trim() || null,
       }))
       .filter((ing) => ing.name);
-    const steps = draft.steps.map((s) => s.trim()).filter(Boolean);
-    const tags = draft.tags
+    const steps = editDraft.steps.map((s) => s.trim()).filter(Boolean);
+    const tags = editDraft.tags
       .split(/[,;\n]+/)
       .map((t) => t.trim())
       .filter(Boolean);
     const payload = {
-      title: draft.title.trim(),
-      difficulty: draft.difficulty || null,
-      total_time_minutes: parseOptionalInt(draft.total_time_minutes),
-      servings: parseOptionalInt(draft.servings),
-      cuisine: draft.cuisine.trim() || null,
+      title: editDraft.title.trim(),
+      difficulty: editDraft.difficulty || null,
+      total_time_minutes: parseOptionalInt(editDraft.total_time_minutes),
+      servings: parseOptionalInt(editDraft.servings),
+      cuisine: editDraft.cuisine.trim() || null,
       tags,
       ingredients,
       steps,
-      raw_text: draft.raw_text,
+      raw_text: editDraft.raw_text,
     };
 
     try {
