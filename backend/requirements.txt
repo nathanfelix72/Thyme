@@ -18,4 +18,4 @@ chromadb
 sentence-transformers
 tavily-python
 pytest
-
+tzdata
