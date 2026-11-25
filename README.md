@@ -122,6 +122,30 @@ Env (see `.env.example`):
 
 Day-to-day: **local Vite + local API**. CloudFront hosts the UI; AI features need someone’s API running.
 
+### Production via laptop tunnel ($0)
+
+CloudFront has no API. To make the live site work, expose your local API with a free Cloudflare quick tunnel and publish the URL in `api-config.json` (the frontend reads that at runtime).
+
+1. Deploy a frontend build that includes the `api-config.json` loader (push the tunnel-related frontend changes once).
+2. Terminal A — API:
+   ```powershell
+   npm start
+   ```
+3. Terminal B — tunnel (requires `cloudflared` + AWS CLI credentials that can write the web bucket):
+   ```powershell
+   npm run tunnel
+   ```
+4. Wait for the CloudFront invalidation (~10–60s), then use https://dv5md9hmzm76i.cloudfront.net
+
+The tunnel script uploads only `api-config.json` to S3 (no full rebuild). When you stop the tunnel (Ctrl+C), it clears `apiBase` so the site doesn’t keep pointing at a dead URL.
+
+```powershell
+winget install Cloudflare.cloudflared   # once
+aws sts get-caller-identity             # confirm AWS CLI works
+```
+
+Optional: `.\scripts\tunnel.ps1 -SkipPublish` prints a tunnel URL without touching S3.
+
 ## CI/CD
 
 Push to `main` (frontend changes) runs [`.github/workflows/deploy-frontend.yml`](.github/workflows/deploy-frontend.yml):
