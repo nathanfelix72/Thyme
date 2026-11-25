@@ -1,3 +1,6 @@
 aws_region         = "us-west-1"
 project_name       = "thyme"
 enable_cloudfront  = true
+# Lightsail is not available in us-west-1 — use EC2 instead.
+enable_ec2_api         = true
+ec2_api_instance_type  = "t3.small" # ~2 GB RAM, ~$12–15/mo on-demand

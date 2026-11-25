@@ -1,0 +1,24 @@
+# Repo layout: build context is ../backend
+# On EC2, deploy-api.ps1 rewrites context to ./backend (files live under /opt/thyme/).
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: thyme-api:latest
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    env_file:
+      - .env
+    volumes:
+      - chroma_data:/data/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8765/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  chroma_data:

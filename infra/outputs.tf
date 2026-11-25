@@ -41,3 +41,11 @@ output "cloudfront_distribution_id" {
 output "cognito_admins_group" {
   value = aws_cognito_user_group.admins.name
 }
+
+output "ec2_api_ip" {
+  value = var.enable_ec2_api ? aws_eip.api[0].public_ip : null
+}
+
+output "ec2_api_ssh" {
+  value = var.enable_ec2_api ? "ssh -i infra/thyme-api.pem ubuntu@${aws_eip.api[0].public_ip}" : null
+}

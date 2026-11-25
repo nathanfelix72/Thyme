@@ -42,8 +42,10 @@ class SettingsPublic(BaseModel):
     task_providers: TaskProviders = Field(default_factory=TaskProviders)
     has_openai_key: bool = False
     has_anthropic_key: bool = False
+    has_tavily_key: bool = False
     openai_key_hint: str | None = None
     anthropic_key_hint: str | None = None
+    tavily_key_hint: str | None = None
     always_exclude_ingredients: list[str] = Field(default_factory=list)
     display_name: str | None = None
     theme: Theme = "system"
@@ -63,6 +65,10 @@ class SettingsUpdate(BaseModel):
     anthropic_api_key: str | None = Field(
         default=None,
         description="Set to a new key, or empty string to clear.",
+    )
+    tavily_api_key: str | None = Field(
+        default=None,
+        description="Set to a new key, or empty string to clear. Used for web recipe search.",
     )
     always_exclude_ingredients: list[str] | None = Field(
         default=None,

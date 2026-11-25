@@ -36,11 +36,21 @@ def build_web_query(
     return " ".join(parts)
 
 
-def tavily_search(query: str, *, max_results: int = 8) -> list[dict[str, str]]:
-    """Exactly one Tavily search. Returns [{title, url, content}, ...]."""
-    key = (config.TAVILY_API_KEY or "").strip()
+def tavily_search(
+    query: str,
+    *,
+    max_results: int = 8,
+    api_key: str | None = None,
+) -> list[dict[str, str]]:
+    """Exactly one Tavily search. Returns [{title, url, content}, ...].
+
+    Prefer the caller's per-user key; fall back to process env for local/dev only.
+    """
+    key = (api_key or config.TAVILY_API_KEY or "").strip()
     if not key:
-        return []
+        raise ValueError(
+            "No Tavily API key. Add yours under AI settings (per account)."
+        )
 
     from tavily import TavilyClient
 

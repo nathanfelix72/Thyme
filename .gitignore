@@ -10,6 +10,11 @@ infra/*.tfstate
 infra/*.tfstate.*
 infra/*.tfvars
 !infra/*.tfvars.example
+infra/thyme-api.pem
+infra/tfplan*
+
+# Deploy secrets on the API host (generated locally)
+deploy/.env
 
 # Python
 __pycache__/

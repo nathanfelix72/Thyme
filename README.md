@@ -114,37 +114,47 @@ Env (see `.env.example`):
 
 - Your admin invite went to `nathan.felix@gmail.com` (temp password in email → set a new one on first login)
 
-## AWS (phase 1 — no hosted API)
+## AWS production (CloudFront UI + EC2 API)
 
 - Static site: https://dv5md9hmzm76i.cloudfront.net  
-- Backend: run on a laptop (`uvicorn`).  
+- API: EC2 `t3.small` (~$12–15/mo, 2 GB) behind the **same** CloudFront URL (`/api/*`)  
+  - Lightsail is **not** available in `us-west-1`, so we use EC2 in-region with Cognito/DynamoDB  
+- Data: DynamoDB when the API runs with `THYME_ENV=aws` (separate from local JSON)  
+- AI on production: **BYOK only** (no Ollama on the box)  
 - Details: [docs/PLAN_B_AWS.md](docs/PLAN_B_AWS.md)
 
-Day-to-day: **local Vite + local API**. CloudFront hosts the UI; AI features need someone’s API running.
+**Local vs production**
 
-### Production via laptop tunnel ($0)
+| | Local | Production |
+|--|--------|------------|
+| UI | Vite `:5173` | CloudFront |
+| API | `npm start` on laptop | EC2 Docker |
+| Recipes / secrets | `backend/data/` JSON | DynamoDB |
+| LLM | Ollama or BYOK | BYOK |
 
-CloudFront has no API. To make the live site work, expose your local API with a free Cloudflare quick tunnel and publish the URL in `api-config.json` (the frontend reads that at runtime).
+Day-to-day coding stays local. Production does **not** use your laptop.
 
-1. Deploy a frontend build that includes the `api-config.json` loader (push the tunnel-related frontend changes once).
-2. Terminal A — API:
-   ```powershell
-   npm start
-   ```
-3. Terminal B — tunnel (requires `cloudflared` + AWS CLI credentials that can write the web bucket):
-   ```powershell
-   npm run tunnel
-   ```
-4. Wait for the CloudFront invalidation (~10–60s), then use https://dv5md9hmzm76i.cloudfront.net
-
-The tunnel script uploads only `api-config.json` to S3 (no full rebuild). When you stop the tunnel (Ctrl+C), it clears `apiBase` so the site doesn’t keep pointing at a dead URL.
+### Provision / update the API host
 
 ```powershell
-winget install Cloudflare.cloudflared   # once
-aws sts get-caller-identity             # confirm AWS CLI works
+cd infra
+copy terraform.tfvars.example terraform.tfvars   # once
+terraform init
+terraform apply                                  # creates/updates EC2 + CloudFront /api origin
+cd ..
+npm run sync:secrets                             # optional: push TAVILY/etc from local .env → SSM
+.\scripts\deploy-api.ps1                         # SSH + docker compose build/up
+# later secret-only refresh (no rebuild):
+npm run deploy:api:env
 ```
 
-Optional: `.\scripts\tunnel.ps1 -SkipPublish` prints a tunnel URL without touching S3.
+Then check: `https://dv5md9hmzm76i.cloudfront.net/api/health` → `"env":"aws"`.
+
+**Secrets**
+- **Per user (recommended):** OpenAI / Anthropic / Tavily in **AI settings** after Cognito login — encrypted in DynamoDB on production.
+- **Shared host only:** `npm run sync:secrets` pushes HF / Google OAuth / LangSmith from local `.env` → SSM → EC2 (not BYOK keys).
+
+SSH key is written to `infra/thyme-api.pem` (gitignored).
 
 ## CI/CD
 

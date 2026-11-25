@@ -37,6 +37,16 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
   signing_protocol                  = "sigv4"
 }
 
+data "aws_cloudfront_cache_policy" "caching_disabled" {
+  count = var.enable_cloudfront && var.enable_ec2_api ? 1 : 0
+  name  = "Managed-CachingDisabled"
+}
+
+data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  count = var.enable_cloudfront && var.enable_ec2_api ? 1 : 0
+  name  = "Managed-AllViewerExceptHostHeader"
+}
+
 resource "aws_cloudfront_distribution" "frontend" {
   count = var.enable_cloudfront ? 1 : 0
 
@@ -51,6 +61,25 @@ resource "aws_cloudfront_distribution" "frontend" {
     origin_id                = "s3-frontend"
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend[0].id
   }
+
+  dynamic "origin" {
+    for_each = var.enable_ec2_api ? [1] : []
+    content {
+      # CloudFront rejects raw IPs; use the regional EC2 public DNS for the EIP.
+      domain_name = "ec2-${replace(aws_eip.api[0].public_ip, ".", "-")}.${var.aws_region}.compute.amazonaws.com"
+      origin_id   = "ec2-api"
+
+      custom_origin_config {
+        http_port              = 8765
+        https_port             = 443
+        origin_protocol_policy = "http-only"
+        origin_ssl_protocols   = ["TLSv1.2"]
+      }
+    }
+  }
+
+  # Ensure EIP is associated before CloudFront points at its DNS name.
+  depends_on = [aws_eip_association.api]
 
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
@@ -67,15 +96,25 @@ resource "aws_cloudfront_distribution" "frontend" {
     }
   }
 
-  # SPA-style fallback so /settings etc. load index.html
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
+  # Same-origin /api/* → EC2 (HTTPS at CloudFront, HTTP to the box).
+  dynamic "ordered_cache_behavior" {
+    for_each = var.enable_ec2_api ? [1] : []
+    content {
+      path_pattern             = "/api/*"
+      allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+      cached_methods           = ["GET", "HEAD"]
+      target_origin_id         = "ec2-api"
+      viewer_protocol_policy   = "redirect-to-https"
+      compress                 = true
+      cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled[0].id
+      origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host[0].id
+    }
   }
 
+  # SPA fallback for missing S3 objects (OAC typically returns 403).
+  # Do not map 404 → index.html: that would break real API 404 JSON responses.
   custom_error_response {
-    error_code         = 404
+    error_code         = 403
     response_code      = 200
     response_page_path = "/index.html"
   }

@@ -64,6 +64,7 @@ class UserSettings:
     task_providers: dict[str, Provider] | None = None
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    tavily_api_key: str | None = None
     always_exclude_ingredients: list[str] | None = None
     display_name: str | None = None
     theme: Theme = "system"
@@ -90,8 +91,10 @@ class UserSettings:
             "task_providers": {task: overrides.get(task) for task in LLM_TASKS},
             "has_openai_key": bool(self.openai_api_key),
             "has_anthropic_key": bool(self.anthropic_api_key),
+            "has_tavily_key": bool(self.tavily_api_key),
             "openai_key_hint": _mask(self.openai_api_key),
             "anthropic_key_hint": _mask(self.anthropic_api_key),
+            "tavily_key_hint": _mask(self.tavily_api_key),
             "always_exclude_ingredients": list(
                 self.always_exclude_ingredients or []
             ),
@@ -111,6 +114,7 @@ class UserSettings:
             task_providers=_normalize_task_providers(payload.get("task_providers")),
             openai_api_key=payload.get("openai_api_key"),
             anthropic_api_key=payload.get("anthropic_api_key"),
+            tavily_api_key=payload.get("tavily_api_key"),
             always_exclude_ingredients=list(
                 payload.get("always_exclude_ingredients") or []
             ),
@@ -138,6 +142,7 @@ class UserSettings:
             "task_providers": _normalize_task_providers(self.task_providers),
             "openai_api_key": self.openai_api_key,
             "anthropic_api_key": self.anthropic_api_key,
+            "tavily_api_key": self.tavily_api_key,
             "always_exclude_ingredients": list(
                 self.always_exclude_ingredients or []
             ),
@@ -157,14 +162,27 @@ class SecretsStore(Protocol):
     def save(self, settings: UserSettings) -> UserSettings: ...
 
 
+def _normalize_fernet_key(raw: str) -> bytes:
+    """Accept Fernet keys with or without base64 padding.
+
+    Terraform ``random_id.b64_url`` is unpadded; ``Fernet.generate_key()`` is
+    padded. cryptography rejects unpadded keys, so restore ``=`` padding.
+    """
+    key = raw.strip().encode()
+    pad = (-len(key)) % 4
+    if pad:
+        key = key + (b"=" * pad)
+    return key
+
+
 def _fernet() -> Fernet:
     raw = config.THYME_SECRETS_KEY.strip()
     if raw:
-        return Fernet(raw.encode())
+        return Fernet(_normalize_fernet_key(raw))
     key_path = config.DATA_DIR / ".fernet_key"
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     if key_path.exists():
-        return Fernet(key_path.read_text(encoding="utf-8").strip().encode())
+        return Fernet(_normalize_fernet_key(key_path.read_text(encoding="utf-8")))
     generated = Fernet.generate_key()
     key_path.write_text(generated.decode(), encoding="utf-8")
     return Fernet(generated)

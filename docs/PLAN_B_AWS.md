@@ -1,6 +1,6 @@
-# Plan B — AWS deploy (awaiting approval)
+# Plan B — AWS deploy
 
-**Status:** Phase 1 **applied** (no hosted API).  
+**Status:** Phase 1 applied + **EC2 API** (always-on, BYOK).  
 **Account:** `248189945218` (`nathan-cli`) · region `us-west-1`
 
 | Output | Value |
@@ -12,6 +12,9 @@
 | Secrets table | `thyme-user-secrets` |
 | Recipes table | `thyme-recipes` |
 | Fernet SSM | `/thyme/thyme_secrets_key` |
+| EC2 API | `t3.small` (~$12–15/mo) → CloudFront `/api/*` |
+
+Note: **Lightsail is not available in `us-west-1`**, so production API is EC2 in the same region as Cognito/DynamoDB.
 
 ## What Plan A already did (no AWS cost)
 
@@ -30,46 +33,36 @@
 | S3 + CloudFront | Host React build (`*.cloudfront.net`, no custom domain) |
 | SSM SecureString | Fernet key for encrypting BYOK payloads |
 
-**Not in first apply (on purpose):** Lambda/App Runner API packaging, Bedrock, RDS, OpenSearch, Route 53, NAT gateways.
-
-API can keep running on a teammate laptop / later Lambda once you approve a second step.
+**Hosted API:** EC2 Ubuntu + Docker (`deploy/`), CloudFront origin for `/api/*`. Production AI is **BYOK only** (no Ollama on the box). Local laptops still use Ollama.
 
 ## Estimated cost (class + family scale)
 
-Assumptions: ~6–20 users, light demos, little always-on traffic, **BYOK so frontier tokens are billed to each user**.
+Assumptions: ~6–20 users, light demos, **BYOK so frontier tokens are billed to each user**.
 
 | Item | Estimate / month |
 |------|------------------|
 | Cognito | **$0** (free tier ≫ class MAUs) |
 | DynamoDB on-demand | **~$0–1** |
 | S3 storage + requests | **~$0–1** |
-| CloudFront (PriceClass_100) | **~$0–3** (near $0 if rarely hit) |
-| SSM | **~$0** |
-| **AWS infra subtotal** | **~$0–5** typical |
+| CloudFront (PriceClass_100) | **~$0–3** |
+| SSM | **$0** |
+| EC2 API (`t3.small` + 30 GB gp3 + EIP) | **~$12–15** |
+| **AWS total** | **~$12–20** typical |
 | Ollama on laptops | **$0** |
 | OpenAI/Anthropic via BYOK | **Paid by each user** (not the AWS account) |
-| Optional later: always-on API (App Runner) | **+$7–15** if you add it |
-| Optional later: Lambda API | usually **$0–2** at this scale |
 
-**Recommended budget to expect:** about **$5/month** AWS for the static+auth+DynamoDB stack, plus whatever individuals spend on their own API keys. Avoid App Runner until you need a public API URL 24/7.
-
-## Apply steps (only after you say yes)
+## Apply / update
 
 ```powershell
 cd infra
-copy terraform.tfvars.example terraform.tfvars
+copy terraform.tfvars.example terraform.tfvars   # once
 terraform init
-terraform plan    # review together
-terraform apply   # only when approved
+terraform apply
+cd ..
+.\scripts\deploy-api.ps1
 ```
 
-Then:
-
-1. `cd frontend && npm run build`
-2. `aws s3 sync dist/ s3://$(terraform output -raw frontend_bucket)`
-3. Open `terraform output -raw cloudfront_url`
-4. Wire Cognito client id into the web app + finish JWT verification in `shared/auth.py`
-5. Decide API host (keep local vs Lambda) in a follow-up
+Health: `https://dv5md9hmzm76i.cloudfront.net/api/health` should show `"env":"aws"`.
 
 ## Destroy (if you want it gone)
 

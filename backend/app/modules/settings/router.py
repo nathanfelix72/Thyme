@@ -46,6 +46,8 @@ def update_settings(
         current.openai_api_key = body.openai_api_key.strip() or None
     if body.anthropic_api_key is not None:
         current.anthropic_api_key = body.anthropic_api_key.strip() or None
+    if body.tavily_api_key is not None:
+        current.tavily_api_key = body.tavily_api_key.strip() or None
     if body.always_exclude_ingredients is not None:
         current.always_exclude_ingredients = [
             item.strip()

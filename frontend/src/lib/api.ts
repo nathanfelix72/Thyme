@@ -1,26 +1,11 @@
 import { fetchAuthSession } from "aws-amplify/auth";
 import { cognitoConfigured } from "./amplify";
 
-/** Empty = same origin (Vite proxy locally, or misconfigured prod). */
-let apiBase = (import.meta.env.VITE_API_BASE as string | undefined)?.trim() || "";
-
 /**
- * Load runtime API base from /api-config.json (uploaded when the laptop tunnel starts).
- * Call once before rendering the app so production CloudFront can reach a tunnel URL
- * without rebuilding the whole frontend.
+ * Empty = same origin.
+ * Local Vite proxies /api → :8765. Production CloudFront routes /api/* → EC2.
  */
-export async function initApiBase(): Promise<void> {
-  try {
-    const res = await fetch("/api-config.json", { cache: "no-store" });
-    if (!res.ok) return;
-    const data = (await res.json()) as { apiBase?: unknown };
-    if (typeof data.apiBase === "string" && data.apiBase.trim()) {
-      apiBase = data.apiBase.trim().replace(/\/$/, "");
-    }
-  } catch {
-    /* keep VITE_API_BASE / empty */
-  }
-}
+const apiBase = (import.meta.env.VITE_API_BASE as string | undefined)?.trim() || "";
 
 export function getApiBase(): string {
   return apiBase;
@@ -45,7 +30,7 @@ export async function apiFetch(
         session.tokens?.idToken?.toString();
       if (token) headers.set("Authorization", `Bearer ${token}`);
     } catch {
-      // Not signed in — local API still accepts local-dev
+      // Not signed in
     }
   }
 

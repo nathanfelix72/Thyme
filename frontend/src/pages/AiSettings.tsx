@@ -20,8 +20,10 @@ type AiSettingsState = {
   task_providers: TaskProviders;
   has_openai_key: boolean;
   has_anthropic_key: boolean;
+  has_tavily_key: boolean;
   openai_key_hint: string | null;
   anthropic_key_hint: string | null;
+  tavily_key_hint: string | null;
 };
 
 const TASK_LABELS: { task: LlmTask; label: string; hint: string }[] = [
@@ -66,8 +68,10 @@ const empty: AiSettingsState = {
   task_providers: emptyTasks(),
   has_openai_key: false,
   has_anthropic_key: false,
+  has_tavily_key: false,
   openai_key_hint: null,
   anthropic_key_hint: null,
+  tavily_key_hint: null,
 };
 
 function normalize(data: Partial<AiSettingsState>): AiSettingsState {
@@ -82,6 +86,7 @@ export function AiSettings() {
   const [settings, setSettings] = useState<AiSettingsState>(empty);
   const [openaiKey, setOpenaiKey] = useState("");
   const [anthropicKey, setAnthropicKey] = useState("");
+  const [tavilyKey, setTavilyKey] = useState("");
   const [testProvider, setTestProvider] = useState<Provider | "">("");
   const [status, setStatus] = useState<string | null>(null);
   const [testReply, setTestReply] = useState<string | null>(null);
@@ -120,6 +125,7 @@ export function AiSettings() {
       };
       if (openaiKey.trim()) body.openai_api_key = openaiKey.trim();
       if (anthropicKey.trim()) body.anthropic_api_key = anthropicKey.trim();
+      if (tavilyKey.trim()) body.tavily_api_key = tavilyKey.trim();
 
       const res = await apiFetch("/api/settings", {
         method: "PUT",
@@ -130,6 +136,7 @@ export function AiSettings() {
       setSettings(normalize(data));
       setOpenaiKey("");
       setAnthropicKey("");
+      setTavilyKey("");
       setStatus("Saved.");
     } catch (err) {
       setStatus(err instanceof Error ? err.message : "Save failed");
@@ -167,9 +174,10 @@ export function AiSettings() {
       <p className="eyebrow">Account · BYOK</p>
       <h1>AI settings</h1>
       <p className="lede">
-        Choose Ollama locally or paste your own OpenAI / Anthropic key. Pick a
-        default, then override individual LLM tasks. Allergy excludes and theme
-        live on <Link to="/profile">Profile</Link>.
+        Keys are per Cognito account (encrypted at rest). Use Ollama locally or
+        paste your own OpenAI / Anthropic / Tavily keys — other users never see
+        them. Allergy excludes and theme live on{" "}
+        <Link to="/profile">Profile</Link>.
       </p>
 
       <form className="settings-form" onSubmit={onSave}>
@@ -254,6 +262,24 @@ export function AiSettings() {
             }
             autoComplete="off"
           />
+        </label>
+
+        <label>
+          Tavily API key
+          <input
+            type="password"
+            value={tavilyKey}
+            onChange={(e) => setTavilyKey(e.target.value)}
+            placeholder={
+              settings.has_tavily_key
+                ? `Saved ${settings.tavily_key_hint}`
+                : "tvly-…"
+            }
+            autoComplete="off"
+          />
+          <span className="field-hint">
+            Required for Upload → Search the web (each account uses its own key).
+          </span>
         </label>
 
         <div className="settings-actions">

@@ -5,6 +5,8 @@
     "start": "venv\\Scripts\\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765",
     "api": "npm start",
     "web": "npm run dev --prefix frontend",
-    "tunnel": "powershell -ExecutionPolicy Bypass -File ./scripts/tunnel.ps1"
+    "sync:secrets": "powershell -ExecutionPolicy Bypass -File ./scripts/sync-secrets-to-ssm.ps1",
+    "deploy:api": "powershell -ExecutionPolicy Bypass -File ./scripts/deploy-api.ps1",
+    "deploy:api:env": "powershell -ExecutionPolicy Bypass -File ./scripts/deploy-api.ps1 -EnvOnly"
   }
 }

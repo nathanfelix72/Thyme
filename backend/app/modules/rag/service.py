@@ -235,7 +235,22 @@ def search(
                 "web_query": web_query,
             }
         )
-        snippets = tavily_search(web_query, max_results=max(req.limit, 6))
+        user_settings = get_store().get(user_id)
+        try:
+            snippets = tavily_search(
+                web_query,
+                max_results=max(req.limit, 6),
+                api_key=user_settings.tavily_api_key,
+            )
+        except ValueError as exc:
+            note(
+                {
+                    "stage": "web",
+                    "message": str(exc),
+                    "rejected": True,
+                }
+            )
+            raise
         web_queried = True
         note(
             {
